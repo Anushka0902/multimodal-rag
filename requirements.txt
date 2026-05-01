@@ -10,7 +10,7 @@ sentence-transformers>=3.0.0
 # Keep everything else unchanged
 langchain-core
 langchain
-pinecone-client
+pinecone
 rank-bm25
 pymupdf
 pandas

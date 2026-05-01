@@ -1,3 +1,6 @@
+MULTI-MODAL RAG SYSTEM | Python, LangChain, Pinecone, OpenAI, Streamlit — Live Demo---https://multimodal-rag-4ccpt7rdkk6yxarnsjxgwh.streamlit.app/
+
+
 # Multi-Modal RAG System
 
 Production-grade RAG system supporting PDFs, images, and CSV data with hybrid search,

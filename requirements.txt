@@ -1,0 +1,20 @@
+# Remove these 3
+# openai
+# langchain-openai
+# cohere
+
+# Add these 2
+google-generativeai>=0.8.0
+sentence-transformers>=3.0.0
+
+# Keep everything else unchanged
+langchain-core
+langchain
+pinecone-client
+rank-bm25
+pymupdf
+pandas
+pillow
+streamlit
+plotly
+pydantic-settings

@@ -1,0 +1,107 @@
+# Multi-Modal RAG System
+
+Production-grade RAG system supporting PDFs, images, and CSV data with hybrid search,
+Cohere reranking, and an evaluation dashboard. Deployed on Azure Container Apps.
+
+## Architecture
+
+```
+Upload (PDF / Image / CSV)
+        │
+        ├── PDF  → PyMuPDF → RecursiveCharacterTextSplitter
+        ├── IMG  → GPT-4 Vision → caption text
+        └── CSV  → row serialisation + stats chunk
+                │
+        OpenAI text-embedding-3-large (3072 dims)
+                │
+        Pinecone (3 namespaces: text | image | table)
+                │
+        Query → BM25 + Semantic → RRF Fusion → Cohere Rerank
+                │
+        GPT-4o → grounded answer + source citations + confidence
+```
+
+## Quick start
+
+```bash
+# 1. Clone & install
+git clone <repo>
+cd multimodal-rag
+pip install -r requirements.txt
+
+# 2. Configure
+cp .env.example .env
+# Fill in OPENAI_API_KEY, PINECONE_API_KEY, COHERE_API_KEY
+
+# 3. Run locally
+streamlit run app.py
+```
+
+## Docker
+
+```bash
+docker build -t multimodal-rag .
+docker run -p 8501:8501 --env-file .env multimodal-rag
+```
+
+## Azure deployment
+
+```bash
+az acr build --registry <your-registry> --image multimodal-rag:latest .
+
+az deployment group create \
+  --resource-group <rg> \
+  --template-file azure-deploy.bicep \
+  --parameters \
+      containerImage=<your-registry>.azurecr.io/multimodal-rag:latest \
+      openaiKey=$OPENAI_API_KEY \
+      pineconeKey=$PINECONE_API_KEY \
+      pineconeEnv=us-east-1 \
+      cohereKey=$COHERE_API_KEY
+```
+
+## Key design decisions
+
+| Choice | Why |
+|--------|-----|
+| Pinecone over ChromaDB | Managed, production-scale, namespace support for multi-modal |
+| text-embedding-3-large | Best OpenAI retrieval quality (3072 dims) |
+| BM25 + semantic (hybrid) | Covers both exact-match and semantic queries |
+| RRF fusion | Parameter-free, robust rank combination |
+| Cohere cross-encoder rerank | Re-scores top-20 with full query-document attention |
+| GPT-4o Vision | State-of-art image understanding for caption generation |
+| Streamlit | Rapid UI, native file upload, works in Docker |
+| Azure Container Apps | Auto-scaling, managed HTTPS, secret management |
+
+## Project structure
+
+```
+multimodal-rag/
+├── app.py                          # Streamlit UI
+├── config/settings.py              # Pydantic settings (env vars)
+├── src/
+│   ├── orchestrator.py             # Top-level coordinator
+│   ├── ingestion/
+│   │   ├── pdf_pipeline.py         # PyMuPDF + chunking
+│   │   ├── image_pipeline.py       # GPT-4 Vision captioning
+│   │   └── csv_pipeline.py         # Row serialisation
+│   ├── embeddings/
+│   │   └── embedding_manager.py    # OpenAI embed + Pinecone upsert
+│   ├── retrieval/
+│   │   ├── hybrid_retriever.py     # BM25 + semantic + RRF + Cohere rerank
+│   │   └── rag_chain.py            # Prompt assembly + GPT-4o answer
+│   └── evaluation/
+│       └── metrics.py              # MRR, P@K, faithfulness, latency
+├── Dockerfile
+├── azure-deploy.bicep
+└── requirements.txt
+```
+
+## Resume bullet
+
+> Built a production-grade multi-modal RAG system using LangChain, Pinecone (namespaced
+> vector store), and OpenAI text-embedding-3-large with hybrid BM25 + semantic search,
+> Reciprocal Rank Fusion, and Cohere cross-encoder reranking. Supports PDFs, images
+> (GPT-4 Vision captioning), and CSV data with metadata filtering, confidence scoring,
+> and a real-time evaluation dashboard tracking MRR, Precision@5, and answer faithfulness.
+> Containerised with Docker and deployed on Azure Container Apps with auto-scaling.

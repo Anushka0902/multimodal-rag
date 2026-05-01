@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Iterator
 
 import fitz  # PyMuPDF
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
 from config.settings import get_settings
